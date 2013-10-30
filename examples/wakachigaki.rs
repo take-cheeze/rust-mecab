@@ -1,3 +1,4 @@
+extern mod std;
 extern mod mecab;
 
 use mecab::IMeCabNode;
@@ -7,19 +8,19 @@ fn main() {
 
     let input = "うらにわにはにわにわにはにわにわとりがいる";
 
-    io::println(fmt!("input: %s", input));
+    std::io::println(format!("input: {:s}", input));
 
     let node = mecab.parse_to_node(input);
 
-    io::print("output: ");
+    std::io::print("output: ");
 
-    for node.each |n| {
-        let status = n.get_status();
+    for n in node.iter() {
+        let status = unsafe { (*n).get_status() };
 
         if status == mecab::UNK_NODE || status == mecab::NOR_NODE {
-            io::print(fmt!("%s ", n.get_surface()));
+            std::io::print(format!("{:s} ", unsafe { (*n).get_surface() } ));
         }
     }
 
-    io::print("\n");
+    std::io::print("\n");
 }
