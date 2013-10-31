@@ -393,17 +393,14 @@ impl MeCab {
     /// Parses input and may return `MeCabNode`.
     #[fixed_stack_segment]
     pub fn parse_to_node(&self, input: &str) -> MeCabNode {
-        let node = do input.to_c_str().with_ref |buf| {
-            unsafe {
-                mecab_sparse_tonode(self.mecab, buf)
+        unsafe {
+            let node = mecab_sparse_tonode2(self.mecab, std::vec::raw::to_ptr(input.as_bytes()) as *c_char, input.len() as u64 );
+            if node.is_null() {
+                let msg = self.strerror();
+                fail!(msg);
+            } else {
+                MeCabNode { node: node }
             }
-        };
-
-        if node.is_null() {
-            let msg = self.strerror();
-            fail!(msg);
-        } else {
-            MeCabNode { node: node }
         }
     }
 
