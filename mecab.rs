@@ -266,7 +266,7 @@ pub trait IMeCabDict {
 }
 
 pub trait IMeCabNode {
-    fn get_surface(&self) -> ~str;
+    fn get_surface<'v>(&'v self) -> &'v str;
     fn get_feature(&self) -> ~str;
     fn get_status(&self) -> u8;
     fn get_posid(&self) -> u16;
@@ -313,11 +313,10 @@ impl IMeCabDict for mecab_dictionary_info_t {
 }
 
 impl IMeCabNode for mecab_node_t {
-    /// Returns pre-sliced `mecab_node_t.surface`.
-    fn get_surface(&self) -> ~str {
+    fn get_surface<'v>(&'v self) -> &'v str {
         unsafe {
-            let s = std::str::raw::from_c_str(self.surface);
-            s.slice( 0, self.length as uint).to_owned()
+            let s = std::vec::raw::buf_as_slice(self.surface as *u8, self.length as uint, |v| { std::cast::transmute(v) });
+            return std::str::from_utf8_slice(s);
         }
     }
 
