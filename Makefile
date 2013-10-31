@@ -11,14 +11,14 @@ LIB_DEPS := $(shell mecab-config --libs-only-L)
 all: libmecab
 
 libmecab: setup-lib $(SOURCES)
-	rustc -O mecab.rs -L $(LIB_DEPS) --out-dir $(LIBDIR)
+	rustc -Z extra-debug-info -O mecab.rs -L $(LIB_DEPS) --out-dir $(LIBDIR)
 
 .PHONY: test
 test: setup-test $(SOURCES)
 	rustc -O mecab.rs -L $(LIB_DEPS) --test --out-dir $(TESTDIR)
 
 wakachigaki: setup-bin libmecab $(E)/wakachigaki.rs
-	rustc -O $(E)/wakachigaki.rs -L $(LIBDIR) -L $(LIB_DEPS) --out-dir $(BINDIR)
+	rustc -Z extra-debug-info -O $(E)/wakachigaki.rs -L $(LIBDIR) -L $(LIB_DEPS) --out-dir $(BINDIR)
 
 katakanize: setup-bin libmecab $(E)/katakanize.rs
 	rustc -O $(E)/katakanize.rs -L $(LIBDIR) --out-dir $(BINDIR)

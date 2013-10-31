@@ -17,12 +17,14 @@ This binding is licensed under the same license of MeCab.
 
 #[allow(non_camel_case_types)];
 
-extern mod std;
+use std::libc::types::os::arch::c95::c_char;
+use std::libc::types::os::arch::c95::c_int;
+use std::libc::types::os::arch::c95::c_float;
+use std::libc::types::os::arch::c95::c_uint;
+use std::libc::types::os::arch::c95::c_long;
+use std::libc::types::os::arch::c95::size_t;
 
-
-use std::libc::*;
-use std::vec::*;
-
+use std::rt::io::stdio::println;
 
 #[cfg(test)]
 mod test;

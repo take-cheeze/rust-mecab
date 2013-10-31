@@ -1,4 +1,3 @@
-use super::*;
 
 #[test]
 fn test_mecab_version() {
