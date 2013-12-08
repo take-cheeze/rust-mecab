@@ -369,6 +369,46 @@ impl BaseIter<mecab_node_t> for MeCabNode {
 */
 
 impl MeCab {
+    /// The wrapper of `mecab::mecab_new` that may return `MeCab`.
+    pub fn new(args: &[~str]) -> MeCab {
+        let argc = args.len() as c_int;
+
+        let mut argptrs = ~[];
+        let mut tmps = ~[];
+
+        for arg in args.iter() {
+            //let t = @copy *arg;
+            let t = (*arg).clone();
+            tmps.push(t.clone());
+            argptrs.push(t.to_c_str().with_ref(|b| b));
+        }
+        argptrs.push(std::ptr::null());
+
+        let mecab = argptrs.as_imm_buf(|argv, _len| unsafe {
+            mecab_new(argc, argv)
+        });
+
+        if mecab.is_null() {
+            fail!(~"failed to create new instance");
+        } else {
+            MeCab { mecab: mecab }
+        }
+    }
+
+    /// The wrapper of `mecab::mecab_new2` that may return `MeCab`.
+    pub fn new2(arg: &str) -> MeCab {
+        let mecab = arg.to_c_str().with_ref( |buf| {
+            unsafe {
+                mecab_new2(buf)
+            }
+        });
+
+        if mecab.is_null() {
+            fail!(~"failed to create new instance");
+        } else {
+            MeCab { mecab: mecab }
+        }
+    }
     /// Parses input and may return the string of result.
     fn parse(&self, input: &str) -> ~str {
         let s = input.to_c_str().with_ref(|buf| {
@@ -429,6 +469,55 @@ impl MeCab {
 }
 
 impl MeCabModel {
+
+    /**
+
+    The wrapper of `mecab::mecab_model_new` that
+    may return `MeCabModel`.
+    */
+    pub fn model_new(args: &[~str]) -> MeCabModel {
+        let argc = args.len() as c_int;
+
+        let mut argptrs = ~[];
+        let mut tmps = ~[];
+
+        for arg in args.iter() {
+            let t = (*arg).clone();
+            tmps.push(t.clone());
+    //TODO I'm not sure
+            argptrs.push(t.to_c_str().with_ref( |b| {b}) );
+        }
+        argptrs.push(std::ptr::null());
+
+        let model = argptrs.as_imm_buf(|argv, _len| unsafe {
+            mecab_model_new(argc, argv)
+        });
+
+        if model.is_null() {
+            fail!(~"failed to create new Model");
+        } else {
+            MeCabModel { model: model }
+        }
+    }
+
+    /**
+    The wrapper of `mecab::mecab_model_new2` that
+    may return `MeCabModel`.
+    */
+    pub fn model_new2(arg: &str) -> MeCabModel {
+        let model = arg.to_c_str().with_ref(|buf| {
+            unsafe {
+                mecab_model_new2(buf)
+            }
+        });
+
+        if model.is_null() {
+            fail!(~"failed to create new Model");
+        } else {
+            MeCabModel { model: model }
+        }
+    }
+
     /// Creates new tagger.
     fn create_tagger(&self) -> MeCab {
         unsafe {
@@ -509,93 +598,7 @@ impl MeCabLattice {
     }
 }
 
-/// The wrapper of `mecab::mecab_new` that may return `MeCab`.
-pub fn new(args: &[~str]) -> MeCab {
-    let argc = args.len() as c_int;
 
-    let mut argptrs = ~[];
-    let mut tmps = ~[];
-
-    for arg in args.iter() {
-        //let t = @copy *arg;
-        let t = (*arg).clone();
-        tmps.push(t.clone());
-        argptrs.push(t.to_c_str().with_ref(|b| b));
-    }
-    argptrs.push(std::ptr::null());
-
-    let mecab = argptrs.as_imm_buf(|argv, _len| unsafe {
-        mecab_new(argc, argv)
-    });
-
-    if mecab.is_null() {
-        fail!(~"failed to create new instance");
-    } else {
-        MeCab { mecab: mecab }
-    }
-}
-
-/// The wrapper of `mecab::mecab_new2` that may return `MeCab`.
-pub fn new2(arg: &str) -> MeCab {
-    let mecab = arg.to_c_str().with_ref( |buf| {
-        unsafe {
-            mecab_new2(buf)
-        }
-    });
-
-    if mecab.is_null() {
-        fail!(~"failed to create new instance");
-    } else {
-        MeCab { mecab: mecab }
-    }
-}
-
-/**
-The wrapper of `mecab::mecab_model_new` that
-may return uniquely managed `MeCabModel`.
-*/
-pub fn model_new(args: &[~str]) -> ~MeCabModel {
-    let argc = args.len() as c_int;
-
-    let mut argptrs = ~[];
-    let mut tmps = ~[];
-
-    for arg in args.iter() {
-        let t = (*arg).clone();
-        tmps.push(t.clone());
-//TODO I'm not sure
-        argptrs.push(t.to_c_str().with_ref( |b| {b}) );
-    }
-    argptrs.push(std::ptr::null());
-
-    let model = argptrs.as_imm_buf(|argv, _len| unsafe {
-        mecab_model_new(argc, argv)
-    });
-
-    if model.is_null() {
-        fail!(~"failed to create new Model");
-    } else {
-        ~MeCabModel { model: model }
-    }
-}
-
-/**
-The wrapper of `mecab::mecab_model_new2` that
-may return uniquely managed `MeCabModel`.
-*/
-pub fn model_new2(arg: &str) -> ~MeCabModel {
-    let model = arg.to_c_str().with_ref(|buf| {
-        unsafe {
-            mecab_model_new2(buf)
-        }
-    });
-
-    if model.is_null() {
-        fail!(~"failed to create new Model");
-    } else {
-        ~MeCabModel { model: model }
-    }
-}
 
 /**
 The wrapper of `mecab::mecab_version` that

@@ -7,7 +7,7 @@ use mecab::IMeCabNode;
 //use std::rt::io::println;
 
 fn main() {
-    let mecab = mecab::new2("");
+    let mecab = mecab::MeCab::new2("");
 
     let input = "うらにわにはにわにわにはにわにわとりがいる";
 
