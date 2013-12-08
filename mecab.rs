@@ -217,7 +217,9 @@ pub struct MeCab {
 
 /// Wrapped structure for `mecab_model_t`.
 pub struct MeCabModel {
-    priv model: *mecab_model_t
+    priv model: *mecab_model_t,
+    priv lattices: ~[MeCabLattice],
+    priv taggers: ~[MeCab]
 }
 
 /// Wrapped structure for `mecab_lattice_t`.
@@ -476,7 +478,7 @@ impl MeCabModel {
     The wrapper of `mecab::mecab_model_new` that
     may return `MeCabModel`.
     */
-    pub fn model_new(args: &[~str]) -> MeCabModel {
+    pub fn new(args: &[~str]) -> MeCabModel {
         let argc = args.len() as c_int;
 
         let mut argptrs = ~[];
@@ -497,7 +499,7 @@ impl MeCabModel {
         if model.is_null() {
             fail!(~"failed to create new Model");
         } else {
-            MeCabModel { model: model }
+            MeCabModel { model: model, lattices: ~[], taggers: ~[] }
         }
     }
 
@@ -505,7 +507,7 @@ impl MeCabModel {
     The wrapper of `mecab::mecab_model_new2` that
     may return `MeCabModel`.
     */
-    pub fn model_new2(arg: &str) -> MeCabModel {
+    pub fn new2(arg: &str) -> MeCabModel {
         let model = arg.to_c_str().with_ref(|buf| {
             unsafe {
                 mecab_model_new2(buf)
@@ -515,25 +517,26 @@ impl MeCabModel {
         if model.is_null() {
             fail!(~"failed to create new Model");
         } else {
-            MeCabModel { model: model }
+            MeCabModel { model: model, lattices: ~[], taggers: ~[] }
         }
     }
 
     /// Creates new tagger.
-    fn create_tagger(&self) -> MeCab {
+    pub fn create_tagger<'r>(&'r mut self) -> &'r MeCab {
         unsafe {
             let mecab = mecab_model_new_tagger(self.model);
 
             if mecab.is_null() {
                 fail!(~"failed to create new Tagger");
             } else {
-                MeCab { mecab: mecab }
+                self.taggers.push(MeCab { mecab: mecab });
+                self.taggers.last()
             }
         }
     }
 
     /// Creates new lattice.
-    fn create_lattice(&self) -> MeCabLattice {
+    pub fn create_lattice(&self) -> MeCabLattice {
         unsafe {
             let lattice = mecab_model_new_lattice(self.model);
 
