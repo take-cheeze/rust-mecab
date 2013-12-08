@@ -157,39 +157,39 @@ representing a end of the N-best enumeration.
 pub static EON_NODE: u8 = 4u8;
 
 /// Wrapped structure for `mecab_dictionary_info_t`.
-pub struct MeCabDictionaryInfo {
+pub struct DictionaryInfo {
     priv dict: *mecab_dictionary_info_t
 }
 
-pub struct MeCabDictionaryInfoIterator {
+pub struct DictionaryInfoIterator {
     priv position: *mecab_dictionary_info_t
 }
 
 
-impl Iterator<MeCabDictionaryInfo> for MeCabDictionaryInfoIterator {
-    fn next(&mut self) -> Option<MeCabDictionaryInfo> {
-        Some( MeCabDictionaryInfo { dict: self.position } )
+impl Iterator<DictionaryInfo> for DictionaryInfoIterator {
+    fn next(&mut self) -> Option<DictionaryInfo> {
+        Some( DictionaryInfo { dict: self.position } )
     }
 }
 
-impl MeCabDictionaryInfo {
-    pub fn iter(&self) -> MeCabDictionaryInfoIterator {
-        MeCabDictionaryInfoIterator { position: self.dict }
+impl DictionaryInfo {
+    pub fn iter(&self) -> DictionaryInfoIterator {
+        DictionaryInfoIterator { position: self.dict }
     }
 }
 
 
 /// Wrapped structure for `mecab_node_t`.
-pub struct MeCabNode {
+pub struct Node {
     priv node: *mecab_node_t
 }
 
-pub struct MeCabNodeIterator {
+pub struct NodeIterator {
     priv position: *mecab_node_t
 }
 
 
-impl Iterator<*mecab_node_t> for MeCabNodeIterator {
+impl Iterator<*mecab_node_t> for NodeIterator {
     fn next(&mut self) -> Option<*mecab_node_t> {
         if self.position.is_not_null() {
           let current_position = self.position;
@@ -201,60 +201,60 @@ impl Iterator<*mecab_node_t> for MeCabNodeIterator {
           None
         }
         
-        //Some( MeCabNode { node: self.position } )
+        //Some( Node { node: self.position } )
     }
 }
 
-impl MeCabNode {
-    pub fn iter(&self) -> MeCabNodeIterator {
-        MeCabNodeIterator { position: self.node }
+impl Node {
+    pub fn iter(&self) -> NodeIterator {
+        NodeIterator { position: self.node }
     }
 }
 /// Wrapped structure for `mecab_t`.
-pub struct MeCab {
+pub struct Tagger {
     priv mecab: *mecab_t
 }
 
 /// Wrapped structure for `mecab_model_t`.
-pub struct MeCabModel {
+pub struct Model {
     priv model: *mecab_model_t,
-    priv lattices: ~[MeCabLattice],
-    priv taggers: ~[MeCab]
+    priv lattices: ~[Lattice],
+    priv taggers: ~[Tagger]
 }
 
 /// Wrapped structure for `mecab_lattice_t`.
-pub struct MeCabLattice {
+pub struct Lattice {
     lattice: *mecab_lattice_t
 }
 
 
-impl Drop for MeCabDictionaryInfo {
+impl Drop for DictionaryInfo {
     fn drop(&mut self) {}
 }
 
-impl Drop for MeCabNode {
+impl Drop for Node {
     fn drop(&mut self) {}
 }
 
-impl Drop for MeCab {
+impl Drop for Tagger {
     fn drop(&mut self) {
         unsafe { mecab_destroy(self.mecab); }
     }
 }
 
-impl Drop for MeCabModel {
+impl Drop for Model {
     fn drop(&mut self) {
         unsafe { mecab_model_destroy(self.model); }
     }
 }
 
-impl Drop for MeCabLattice {
+impl Drop for Lattice {
     fn drop(&mut self) {
         unsafe { mecab_lattice_destroy(self.lattice); }
     }
 }
 
-pub trait IMeCabDict {
+pub trait IDict {
     fn get_filename(&self) -> ~str;
     fn get_charset(&self) -> ~str;
     fn get_size(&self) -> uint;
@@ -264,7 +264,7 @@ pub trait IMeCabDict {
     fn get_version(&self) -> uint;
 }
 
-pub trait IMeCabNode {
+pub trait INode {
     fn get_surface<'v>(&'v self) -> &'v str;
     fn get_feature(&self) -> ~str;
     fn get_status(&self) -> u8;
@@ -274,7 +274,7 @@ pub trait IMeCabNode {
     fn is_best(&self) -> bool;
 }
 
-impl IMeCabDict for mecab_dictionary_info_t {
+impl IDict for mecab_dictionary_info_t {
     /// Returns `mecab_dictionary_info_t.filename`.
     fn get_filename(&self) -> ~str {
         unsafe { std::str::raw::from_c_str(self.filename) }
@@ -311,7 +311,7 @@ impl IMeCabDict for mecab_dictionary_info_t {
     }
 }
 
-impl IMeCabNode for mecab_node_t {
+impl INode for mecab_node_t {
     fn get_surface<'v>(&'v self) -> &'v str {
         unsafe {
             let s = std::vec::raw::buf_as_slice(self.surface as *u8, self.length as uint, |v| { std::cast::transmute(v) });
@@ -344,7 +344,7 @@ impl IMeCabNode for mecab_node_t {
     }
 }
 /*
-impl BaseIter<mecab_dictionary_info_t> for MeCabDictionaryInfo {
+impl BaseIter<mecab_dictionary_info_t> for DictionaryInfo {
     fn size_hint(&self) -> Option<uint> { None }
 
     fn each(&self, blk: &fn(&mecab_dictionary_info_t) -> bool) {
@@ -357,7 +357,7 @@ impl BaseIter<mecab_dictionary_info_t> for MeCabDictionaryInfo {
     }
 }
 
-impl BaseIter<mecab_node_t> for MeCabNode {
+impl BaseIter<mecab_node_t> for Node {
     fn size_hint(&self) -> Option<uint> { None }
 
     fn each(&self, blk: &fn(&mecab_node_t) -> bool) {
@@ -371,9 +371,9 @@ impl BaseIter<mecab_node_t> for MeCabNode {
 }
 */
 
-impl MeCab {
-    /// The wrapper of `mecab::mecab_new` that may return `MeCab`.
-    pub fn new(args: &[~str]) -> MeCab {
+impl Tagger {
+    /// The wrapper of `mecab::mecab_new` that may return `Tagger`.
+    pub fn new(args: &[~str]) -> Tagger {
         let argc = args.len() as c_int;
 
         let mut argptrs = ~[];
@@ -394,12 +394,12 @@ impl MeCab {
         if mecab.is_null() {
             fail!(~"failed to create new instance");
         } else {
-            MeCab { mecab: mecab }
+            Tagger { mecab: mecab }
         }
     }
 
-    /// The wrapper of `mecab::mecab_new2` that may return `MeCab`.
-    pub fn new2(arg: &str) -> MeCab {
+    /// The wrapper of `mecab::mecab_new2` that may return `Tagger`.
+    pub fn new2(arg: &str) -> Tagger {
         let mecab = arg.to_c_str().with_ref( |buf| {
             unsafe {
                 mecab_new2(buf)
@@ -409,7 +409,7 @@ impl MeCab {
         if mecab.is_null() {
             fail!(~"failed to create new instance");
         } else {
-            MeCab { mecab: mecab }
+            Tagger { mecab: mecab }
         }
     }
     /// Parses input and may return the string of result.
@@ -428,29 +428,29 @@ impl MeCab {
         }
     }
 
-    /// Parses input and may return `MeCabNode`.
-    pub fn parse_to_node(&self, input: &str) -> MeCabNode {
+    /// Parses input and may return `Node`.
+    pub fn parse_to_node(&self, input: &str) -> Node {
         unsafe {
             let node = mecab_sparse_tonode2(self.mecab, std::vec::raw::to_ptr(input.as_bytes()) as *c_char, input.len() as u64 );
             if node.is_null() {
                 let msg = self.strerror();
                 fail!(msg);
             } else {
-                MeCabNode { node: node }
+                Node { node: node }
             }
         }
     }
 
     /// Parses input in given `lattice` and returns true on success.
-    fn parse_lattice(&self, lattice: &MeCabLattice) -> bool {
+    fn parse_lattice(&self, lattice: &Lattice) -> bool {
         unsafe {
             let status = mecab_parse_lattice(self.mecab, lattice.lattice);
             status != 0 as c_int
         }
     }
 
-    /// Returns `MeCabDictionaryInfo`.
-    fn get_dictionary_info(&self) -> MeCabDictionaryInfo {
+    /// Returns `DictionaryInfo`.
+    fn get_dictionary_info(&self) -> DictionaryInfo {
         unsafe {
             let dict = mecab_dictionary_info(self.mecab);
 
@@ -458,7 +458,7 @@ impl MeCab {
                 let msg = self.strerror();
                 fail!(msg);
             } else {
-                MeCabDictionaryInfo { dict: dict }
+                DictionaryInfo { dict: dict }
             }
         }
     }
@@ -471,14 +471,14 @@ impl MeCab {
     }
 }
 
-impl MeCabModel {
+impl Model {
 
     /**
 
     The wrapper of `mecab::mecab_model_new` that
-    may return `MeCabModel`.
+    may return `Model`.
     */
-    pub fn new(args: &[~str]) -> MeCabModel {
+    pub fn new(args: &[~str]) -> Model {
         let argc = args.len() as c_int;
 
         let mut argptrs = ~[];
@@ -499,15 +499,15 @@ impl MeCabModel {
         if model.is_null() {
             fail!(~"failed to create new Model");
         } else {
-            MeCabModel { model: model, lattices: ~[], taggers: ~[] }
+            Model { model: model, lattices: ~[], taggers: ~[] }
         }
     }
 
     /**
     The wrapper of `mecab::mecab_model_new2` that
-    may return `MeCabModel`.
+    may return `Model`.
     */
-    pub fn new2(arg: &str) -> MeCabModel {
+    pub fn new2(arg: &str) -> Model {
         let model = arg.to_c_str().with_ref(|buf| {
             unsafe {
                 mecab_model_new2(buf)
@@ -517,39 +517,39 @@ impl MeCabModel {
         if model.is_null() {
             fail!(~"failed to create new Model");
         } else {
-            MeCabModel { model: model, lattices: ~[], taggers: ~[] }
+            Model { model: model, lattices: ~[], taggers: ~[] }
         }
     }
 
     /// Creates new tagger.
-    pub fn create_tagger<'r>(&'r mut self) -> &'r MeCab {
+    pub fn create_tagger<'r>(&'r mut self) -> &'r Tagger {
         unsafe {
             let mecab = mecab_model_new_tagger(self.model);
 
             if mecab.is_null() {
                 fail!(~"failed to create new Tagger");
             } else {
-                self.taggers.push(MeCab { mecab: mecab });
+                self.taggers.push(Tagger { mecab: mecab });
                 self.taggers.last()
             }
         }
     }
 
     /// Creates new lattice.
-    pub fn create_lattice(&self) -> MeCabLattice {
+    pub fn create_lattice(&self) -> Lattice {
         unsafe {
             let lattice = mecab_model_new_lattice(self.model);
 
             if lattice.is_null() {
                 fail!(~"failed to create new Lattice");
             } else {
-                MeCabLattice { lattice: lattice }
+                Lattice { lattice: lattice }
             }
         }
     }
 }
 
-impl ToStr for MeCabLattice {
+impl ToStr for Lattice {
     fn to_str(&self) -> ~str {
         unsafe {
             let s = mecab_lattice_tostr(self.lattice);
@@ -558,7 +558,7 @@ impl ToStr for MeCabLattice {
     }
 }
 
-impl MeCabLattice {
+impl Lattice {
     /// Set input of the lattice.
     fn set_sentence(&self, input: &str) {
         input.to_c_str().with_ref( |buf| {
@@ -567,7 +567,7 @@ impl MeCabLattice {
     }
 
     /// Returns the beginning node of the sentence on success.
-    fn get_bos_node(&self) -> MeCabNode {
+    fn get_bos_node(&self) -> Node {
         unsafe {
             let node = mecab_lattice_get_bos_node(self.lattice);
 
@@ -575,13 +575,13 @@ impl MeCabLattice {
                 let msg = self.strerror();
                 fail!(msg);
             } else {
-                MeCabNode { node: node }
+                Node { node: node }
             }
         }
     }
 
     /// Returns the end node of the sentence on success.
-    fn get_eos_node(&self) -> MeCabNode {
+    fn get_eos_node(&self) -> Node {
         unsafe {
             let node = mecab_lattice_get_eos_node(self.lattice);
 
@@ -589,7 +589,7 @@ impl MeCabLattice {
                 let msg = self.strerror();
                 fail!(msg);
             } else {
-                MeCabNode { node: node }
+                Node { node: node }
             }
         }
     }
