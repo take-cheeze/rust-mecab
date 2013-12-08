@@ -7,6 +7,7 @@ This binding is licensed under the same license of MeCab.
 */
 
 #[link(name = "mecab",
+       package_id = "mecab",
        vers = "0.2",
        uuid = "157601c8-818c-4898-b1dc-890eeeab4936",
        url  = "https://github.com/tychosci/rust-mecab")];
@@ -23,8 +24,6 @@ use std::libc::types::os::arch::c95::c_float;
 use std::libc::types::os::arch::c95::c_uint;
 use std::libc::types::os::arch::c95::c_long;
 use std::libc::types::os::arch::c95::size_t;
-
-use std::io::stdio::println;
 
 #[cfg(test)]
 mod test;
@@ -235,21 +234,18 @@ impl Drop for MeCabNode {
 }
 
 impl Drop for MeCab {
-    #[fixed_stack_segment]
     fn drop(&mut self) {
         unsafe { mecab_destroy(self.mecab); }
     }
 }
 
 impl Drop for MeCabModel {
-    #[fixed_stack_segment]
     fn drop(&mut self) {
         unsafe { mecab_model_destroy(self.model); }
     }
 }
 
 impl Drop for MeCabLattice {
-    #[fixed_stack_segment]
     fn drop(&mut self) {
         unsafe { mecab_lattice_destroy(self.lattice); }
     }
@@ -288,27 +284,27 @@ impl IMeCabDict for mecab_dictionary_info_t {
 
     /// Returns `mecab_dictionary_info_t.size`.
     fn get_size(&self) -> uint {
-        unsafe { self.size as uint }
+        self.size as uint
     }
 
     /// Returns `mecab_dictionary_info_t.type`.
     fn get_type(&self) -> int {
-        unsafe { self.ty as int }
+        self.ty as int
     }
 
     /// Returns `mecab_dictionary_info_t.lsize`.
     fn get_lsize(&self) -> uint {
-        unsafe { self.lsize as uint }
+        self.lsize as uint
     }
 
     /// Returns `mecab_dictionary_info_t.rsize`.
     fn get_rsize(&self) -> uint {
-        unsafe { self.rsize as uint }
+        self.rsize as uint
     }
 
     /// Returns `mecab_dictionary_info_t.version`.
     fn get_version(&self) -> uint {
-        unsafe { self.version as uint }
+        self.version as uint
     }
 }
 
@@ -327,21 +323,21 @@ impl IMeCabNode for mecab_node_t {
 
     /// Returns `mecab_node_t.status`.
     fn get_status(&self) -> u8 {
-        unsafe { self.stat }
+        self.stat
     }
 
     /// Returns `mecab_node_t.posid`.
     fn get_posid(&self) -> u16 {
-        unsafe { self.posid }
+        self.posid
     }
 
     /// Returns `mecab_node_t.prob`.
     fn get_prob(&self) -> c_float {
-        unsafe { self.prob }
+        self.prob
     }
 
     fn is_best(&self) -> bool {
-        unsafe { self.isbest == 1 }
+        self.isbest == 1
     }
 }
 /*
@@ -374,7 +370,6 @@ impl BaseIter<mecab_node_t> for MeCabNode {
 
 impl MeCab {
     /// Parses input and may return the string of result.
-    #[fixed_stack_segment]
     fn parse(&self, input: &str) -> ~str {
         let s = input.to_c_str().with_ref(|buf| {
             unsafe {
@@ -391,7 +386,6 @@ impl MeCab {
     }
 
     /// Parses input and may return `MeCabNode`.
-    #[fixed_stack_segment]
     pub fn parse_to_node(&self, input: &str) -> MeCabNode {
         unsafe {
             let node = mecab_sparse_tonode2(self.mecab, std::vec::raw::to_ptr(input.as_bytes()) as *c_char, input.len() as u64 );
@@ -405,7 +399,6 @@ impl MeCab {
     }
 
     /// Parses input in given `lattice` and returns true on success.
-    #[fixed_stack_segment]
     fn parse_lattice(&self, lattice: &MeCabLattice) -> bool {
         unsafe {
             let status = mecab_parse_lattice(self.mecab, lattice.lattice);
@@ -414,7 +407,6 @@ impl MeCab {
     }
 
     /// Returns `MeCabDictionaryInfo`.
-    #[fixed_stack_segment]
     fn get_dictionary_info(&self) -> MeCabDictionaryInfo {
         unsafe {
             let dict = mecab_dictionary_info(self.mecab);
@@ -428,7 +420,6 @@ impl MeCab {
         }
     }
 
-    #[fixed_stack_segment]
     fn strerror(&self) -> ~str {
         unsafe {
             let s = mecab_strerror(self.mecab);
@@ -439,7 +430,6 @@ impl MeCab {
 
 impl MeCabModel {
     /// Creates new tagger.
-    #[fixed_stack_segment]
     fn create_tagger(&self) -> MeCab {
         unsafe {
             let mecab = mecab_model_new_tagger(self.model);
@@ -453,7 +443,6 @@ impl MeCabModel {
     }
 
     /// Creates new lattice.
-    #[fixed_stack_segment]
     fn create_lattice(&self) -> MeCabLattice {
         unsafe {
             let lattice = mecab_model_new_lattice(self.model);
@@ -468,7 +457,6 @@ impl MeCabModel {
 }
 
 impl ToStr for MeCabLattice {
-    #[fixed_stack_segment]
     fn to_str(&self) -> ~str {
         unsafe {
             let s = mecab_lattice_tostr(self.lattice);
@@ -479,7 +467,6 @@ impl ToStr for MeCabLattice {
 
 impl MeCabLattice {
     /// Set input of the lattice.
-    #[fixed_stack_segment]
     fn set_sentence(&self, input: &str) {
         input.to_c_str().with_ref( |buf| {
             unsafe { mecab_lattice_set_sentence(self.lattice, buf); }
@@ -487,7 +474,6 @@ impl MeCabLattice {
     }
 
     /// Returns the beginning node of the sentence on success.
-    #[fixed_stack_segment]
     fn get_bos_node(&self) -> MeCabNode {
         unsafe {
             let node = mecab_lattice_get_bos_node(self.lattice);
@@ -502,7 +488,6 @@ impl MeCabLattice {
     }
 
     /// Returns the end node of the sentence on success.
-    #[fixed_stack_segment]
     fn get_eos_node(&self) -> MeCabNode {
         unsafe {
             let node = mecab_lattice_get_eos_node(self.lattice);
@@ -516,7 +501,6 @@ impl MeCabLattice {
         }
     }
 
-    #[fixed_stack_segment]
     fn strerror(&self) -> ~str {
         unsafe {
             let s = mecab_lattice_strerror(self.lattice);
@@ -526,7 +510,6 @@ impl MeCabLattice {
 }
 
 /// The wrapper of `mecab::mecab_new` that may return `MeCab`.
-#[fixed_stack_segment]
 pub fn new(args: &[~str]) -> MeCab {
     let argc = args.len() as c_int;
 
@@ -553,7 +536,6 @@ pub fn new(args: &[~str]) -> MeCab {
 }
 
 /// The wrapper of `mecab::mecab_new2` that may return `MeCab`.
-#[fixed_stack_segment]
 pub fn new2(arg: &str) -> MeCab {
     let mecab = arg.to_c_str().with_ref( |buf| {
         unsafe {
@@ -572,7 +554,6 @@ pub fn new2(arg: &str) -> MeCab {
 The wrapper of `mecab::mecab_model_new` that
 may return uniquely managed `MeCabModel`.
 */
-#[fixed_stack_segment]
 pub fn model_new(args: &[~str]) -> ~MeCabModel {
     let argc = args.len() as c_int;
 
@@ -602,7 +583,6 @@ pub fn model_new(args: &[~str]) -> ~MeCabModel {
 The wrapper of `mecab::mecab_model_new2` that
 may return uniquely managed `MeCabModel`.
 */
-#[fixed_stack_segment]
 pub fn model_new2(arg: &str) -> ~MeCabModel {
     let model = arg.to_c_str().with_ref(|buf| {
         unsafe {
@@ -621,7 +601,6 @@ pub fn model_new2(arg: &str) -> ~MeCabModel {
 The wrapper of `mecab::mecab_version` that
 returns version-number string.
 */
-#[fixed_stack_segment]
 pub fn version() -> ~str {
     unsafe {
         let vers = mecab_version();
