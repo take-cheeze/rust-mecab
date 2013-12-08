@@ -3,8 +3,8 @@ extern mod mecab;
 
 use mecab::IMeCabNode;
 
-use std::rt::io::stdio::print;
-use std::rt::io::stdio::println;
+//use std::rt::io::print;
+//use std::rt::io::println;
 
 fn main() {
     let mecab = mecab::new2("");

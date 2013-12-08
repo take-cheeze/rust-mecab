@@ -24,14 +24,14 @@ use std::libc::types::os::arch::c95::c_uint;
 use std::libc::types::os::arch::c95::c_long;
 use std::libc::types::os::arch::c95::size_t;
 
-use std::rt::io::stdio::println;
+use std::io::stdio::println;
 
 #[cfg(test)]
 mod test;
 
 // NB: Need to expand `mecab-config --libs-only-L` at link time
 #[nolink]
-#[link_args = "-lmecab -lstdc++"]
+#[link(name= "mecab")]
 extern {
     fn mecab_new(argc: c_int, argv: **c_char) -> *mecab_t;
     fn mecab_new2(arg: *c_char) -> *mecab_t;
@@ -316,7 +316,7 @@ impl IMeCabNode for mecab_node_t {
     fn get_surface<'v>(&'v self) -> &'v str {
         unsafe {
             let s = std::vec::raw::buf_as_slice(self.surface as *u8, self.length as uint, |v| { std::cast::transmute(v) });
-            return std::str::from_utf8_slice(s);
+            return std::str::from_utf8(s);
         }
     }
 
@@ -376,11 +376,11 @@ impl MeCab {
     /// Parses input and may return the string of result.
     #[fixed_stack_segment]
     fn parse(&self, input: &str) -> ~str {
-        let s = do input.to_c_str().with_ref |buf| {
+        let s = input.to_c_str().with_ref(|buf| {
             unsafe {
                 mecab_sparse_tostr(self.mecab, buf)
             }
-        };
+        });
 
         if s.is_null() {
             let msg = self.strerror();
@@ -481,9 +481,9 @@ impl MeCabLattice {
     /// Set input of the lattice.
     #[fixed_stack_segment]
     fn set_sentence(&self, input: &str) {
-        do input.to_c_str().with_ref |buf| {
+        input.to_c_str().with_ref( |buf| {
             unsafe { mecab_lattice_set_sentence(self.lattice, buf); }
-        }
+        })
     }
 
     /// Returns the beginning node of the sentence on success.
@@ -555,11 +555,11 @@ pub fn new(args: &[~str]) -> MeCab {
 /// The wrapper of `mecab::mecab_new2` that may return `MeCab`.
 #[fixed_stack_segment]
 pub fn new2(arg: &str) -> MeCab {
-    let mecab = do arg.to_c_str().with_ref |buf| {
+    let mecab = arg.to_c_str().with_ref( |buf| {
         unsafe {
             mecab_new2(buf)
         }
-    };
+    });
 
     if mecab.is_null() {
         fail!(~"failed to create new instance");
@@ -583,7 +583,7 @@ pub fn model_new(args: &[~str]) -> ~MeCabModel {
         let t = (*arg).clone();
         tmps.push(t.clone());
 //TODO I'm not sure
-        argptrs.push(do t.to_c_str().with_ref |b| {b} );
+        argptrs.push(t.to_c_str().with_ref( |b| {b}) );
     }
     argptrs.push(std::ptr::null());
 
@@ -604,11 +604,11 @@ may return uniquely managed `MeCabModel`.
 */
 #[fixed_stack_segment]
 pub fn model_new2(arg: &str) -> ~MeCabModel {
-    let model = do arg.to_c_str().with_ref|buf| {
+    let model = arg.to_c_str().with_ref(|buf| {
         unsafe {
             mecab_model_new2(buf)
         }
-    };
+    });
 
     if model.is_null() {
         fail!(~"failed to create new Model");
