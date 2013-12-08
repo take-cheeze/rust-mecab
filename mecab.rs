@@ -2,6 +2,7 @@
 MeCab bindings for Rust
 
 Copyright (C) 2012 Tycho Sci
+Copyright (C) 2013 Yegor Alexeyev
 
 This binding is licensed under the same license of MeCab.
 */
