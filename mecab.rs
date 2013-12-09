@@ -428,8 +428,8 @@ impl Tagger {
         }
     }
 
-    /// Parses input and may return `Node`.
-    pub fn parse_to_node(&self, input: &str) -> Node {
+    /// Parses input and returns `Node`.
+    pub fn parse_to_node<'r>(&'r self, input: &str) -> &'r Node {
         unsafe {
             let node = mecab_sparse_tonode2(self.mecab, std::vec::raw::to_ptr(input.as_bytes()) as *c_char, input.len() as u64 );
             if node.is_null() {
