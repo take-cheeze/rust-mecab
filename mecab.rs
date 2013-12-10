@@ -211,15 +211,14 @@ impl Node {
     }
 }
 /// Wrapped structure for `mecab_t`.
-pub struct Tagger {
+pub struct Tagger<'owner> {
+    priv owner: Option<&'owner Model>,
     priv mecab: *mecab_t
 }
 
 /// Wrapped structure for `mecab_model_t`.
 pub struct Model {
     priv model: *mecab_model_t,
-    priv lattices: ~[Lattice],
-    priv taggers: ~[Tagger]
 }
 
 /// Wrapped structure for `mecab_lattice_t`.
@@ -236,8 +235,9 @@ impl Drop for Node {
     fn drop(&mut self) {}
 }
 
-impl Drop for Tagger {
-    fn drop(&mut self) {
+#[unsafe_destructor]
+impl<'owner> Drop for Tagger<'owner> {
+    fn drop(& mut self) {
         unsafe { mecab_destroy(self.mecab); }
     }
 }
@@ -371,7 +371,8 @@ impl BaseIter<mecab_node_t> for Node {
 }
 */
 
-impl Tagger {
+impl<'owner> Tagger<'owner> {
+
     /// The wrapper of `mecab::mecab_new` that may return `Tagger`.
     pub fn new(args: &[~str]) -> Tagger {
         let argc = args.len() as c_int;
@@ -394,7 +395,7 @@ impl Tagger {
         if mecab.is_null() {
             fail!(~"failed to create new instance");
         } else {
-            Tagger { mecab: mecab }
+            Tagger { mecab: mecab, owner: None }
         }
     }
 
@@ -409,9 +410,10 @@ impl Tagger {
         if mecab.is_null() {
             fail!(~"failed to create new instance");
         } else {
-            Tagger { mecab: mecab }
+            Tagger { mecab: mecab, owner: None }
         }
     }
+
     /// Parses input and may return the string of result.
     fn parse(&self, input: &str) -> ~str {
         let s = input.to_c_str().with_ref(|buf| {
@@ -429,7 +431,7 @@ impl Tagger {
     }
 
     /// Parses input and returns `Node`.
-    pub fn parse_to_node<'r>(&'r self, input: &str) -> &'r Node {
+    pub fn parse_to_node(&self, input: &str) -> Node {
         unsafe {
             let node = mecab_sparse_tonode2(self.mecab, std::vec::raw::to_ptr(input.as_bytes()) as *c_char, input.len() as u64 );
             if node.is_null() {
@@ -499,7 +501,7 @@ impl Model {
         if model.is_null() {
             fail!(~"failed to create new Model");
         } else {
-            Model { model: model, lattices: ~[], taggers: ~[] }
+            Model { model: model}
         }
     }
 
@@ -517,20 +519,19 @@ impl Model {
         if model.is_null() {
             fail!(~"failed to create new Model");
         } else {
-            Model { model: model, lattices: ~[], taggers: ~[] }
+            Model { model: model}
         }
     }
 
     /// Creates new tagger.
-    pub fn create_tagger<'r>(&'r mut self) -> &'r Tagger {
+    pub fn create_tagger<'model>(&'model self) -> Tagger<'model> {
         unsafe {
             let mecab = mecab_model_new_tagger(self.model);
 
             if mecab.is_null() {
                 fail!(~"failed to create new Tagger");
             } else {
-                self.taggers.push(Tagger { mecab: mecab });
-                self.taggers.last()
+                Tagger {owner: Some(self), mecab: mecab}
             }
         }
     }
