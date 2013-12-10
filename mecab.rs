@@ -178,11 +178,20 @@ impl DictionaryInfo {
     }
 }
 
+//TODO TaggerNode and LatticeNode should expose the common interface
 
-/// Wrapped structure for `mecab_node_t`.
-pub struct Node {
+pub struct TaggerNode<'owner, 'tagger_owner> {
+    priv owner: &'owner Tagger<'tagger_owner>, 
     priv node: *mecab_node_t
 }
+
+pub struct LatticeNode<'owner, 'lattice_owner> {
+    priv owner: &'owner Lattice<'lattice_owner>, 
+    priv node: *mecab_node_t
+}
+
+
+
 
 pub struct NodeIterator {
     priv position: *mecab_node_t
@@ -205,11 +214,20 @@ impl Iterator<*mecab_node_t> for NodeIterator {
     }
 }
 
-impl Node {
+impl<'owner, 'tagger_owner> TaggerNode<'owner, 'tagger_owner> {
     pub fn iter(&self) -> NodeIterator {
         NodeIterator { position: self.node }
     }
 }
+
+impl<'owner, 'tagger_owner> LatticeNode<'owner, 'tagger_owner> {
+    pub fn iter(&self) -> NodeIterator {
+        NodeIterator { position: self.node }
+    }
+}
+
+
+///
 /// Wrapped structure for `mecab_t`.
 pub struct Tagger<'owner> {
     priv owner: Option<&'owner Model>,
@@ -222,7 +240,8 @@ pub struct Model {
 }
 
 /// Wrapped structure for `mecab_lattice_t`.
-pub struct Lattice {
+pub struct Lattice<'owner> {
+    priv owner: &'owner Model,
     lattice: *mecab_lattice_t
 }
 
@@ -231,7 +250,13 @@ impl Drop for DictionaryInfo {
     fn drop(&mut self) {}
 }
 
-impl Drop for Node {
+#[unsafe_destructor]
+impl<'owner, 'tagger_owner> Drop for TaggerNode<'owner, 'tagger_owner> {
+    fn drop(&mut self) {}
+}
+
+#[unsafe_destructor]
+impl<'owner, 'tagger_owner> Drop for LatticeNode<'owner, 'tagger_owner> {
     fn drop(&mut self) {}
 }
 
@@ -248,7 +273,8 @@ impl Drop for Model {
     }
 }
 
-impl Drop for Lattice {
+#[unsafe_destructor]
+impl<'owner> Drop for Lattice<'owner> {
     fn drop(&mut self) {
         unsafe { mecab_lattice_destroy(self.lattice); }
     }
@@ -431,14 +457,14 @@ impl<'owner> Tagger<'owner> {
     }
 
     /// Parses input and returns `Node`.
-    pub fn parse_to_node(&self, input: &str) -> Node {
+    pub fn parse_to_node<'tagger>(&'tagger self, input: &str) -> TaggerNode<'tagger, 'owner> {
         unsafe {
             let node = mecab_sparse_tonode2(self.mecab, std::vec::raw::to_ptr(input.as_bytes()) as *c_char, input.len() as u64 );
             if node.is_null() {
                 let msg = self.strerror();
                 fail!(msg);
             } else {
-                Node { node: node }
+                TaggerNode { owner: self, node: node }
             }
         }
     }
@@ -537,20 +563,20 @@ impl Model {
     }
 
     /// Creates new lattice.
-    pub fn create_lattice(&self) -> Lattice {
+    pub fn create_lattice<'model>(&'model self) -> Lattice<'model> {
         unsafe {
             let lattice = mecab_model_new_lattice(self.model);
 
             if lattice.is_null() {
                 fail!(~"failed to create new Lattice");
             } else {
-                Lattice { lattice: lattice }
+                Lattice { owner: self, lattice: lattice }
             }
         }
     }
 }
 
-impl ToStr for Lattice {
+impl<'owner> ToStr for Lattice<'owner> {
     fn to_str(&self) -> ~str {
         unsafe {
             let s = mecab_lattice_tostr(self.lattice);
@@ -559,7 +585,7 @@ impl ToStr for Lattice {
     }
 }
 
-impl Lattice {
+impl<'owner> Lattice<'owner> {
     /// Set input of the lattice.
     fn set_sentence(&self, input: &str) {
         input.to_c_str().with_ref( |buf| {
@@ -568,7 +594,7 @@ impl Lattice {
     }
 
     /// Returns the beginning node of the sentence on success.
-    fn get_bos_node(&self) -> Node {
+    fn get_bos_node<'lattice>(&'lattice self) -> LatticeNode<'lattice, 'owner> {
         unsafe {
             let node = mecab_lattice_get_bos_node(self.lattice);
 
@@ -576,13 +602,13 @@ impl Lattice {
                 let msg = self.strerror();
                 fail!(msg);
             } else {
-                Node { node: node }
+                LatticeNode { owner: self, node: node }
             }
         }
     }
 
     /// Returns the end node of the sentence on success.
-    fn get_eos_node(&self) -> Node {
+    fn get_eos_node<'lattice>(&'lattice self) -> LatticeNode<'lattice, 'owner> {
         unsafe {
             let node = mecab_lattice_get_eos_node(self.lattice);
 
@@ -590,7 +616,7 @@ impl Lattice {
                 let msg = self.strerror();
                 fail!(msg);
             } else {
-                Node { node: node }
+                LatticeNode { owner: self, node: node }
             }
         }
     }
