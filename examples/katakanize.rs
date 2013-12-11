@@ -1,30 +1,30 @@
 extern mod mecab;
 
-use mecab::IMeCabNode;
+use mecab::INode;
 
 fn main() {
-    let mecab = mecab::new2("");
+    let mecab = mecab::Tagger::new2("");
 
     let input = "我々は、宇宙人だ";
 
-    io::println(fmt!("input: %s", input));
+    println(format!("input: {:s}", input));
 
     let node = mecab.parse_to_node(input);
 
-    io::print("output: ");
+    print("output: ");
 
-    for node.each |n| {
-        let status = n.get_status();
+    for n in node.iter() {
+        let status = unsafe { (*n).get_status() };
 
         if status == mecab::NOR_NODE {
             let mut i = 0;
-            let feature = n.get_feature();
-            for feature.each_split_char(',') |s| {
-                if i == 7 { io::print(fmt!("%s", s)); }
+            let feature = unsafe { (*n).get_feature() };
+            for s in feature.split(',') {
+                if i == 7 { print(format!("{:s}", s)); }
                 i += 1;
             }
         }
     }
 
-    io::print("\n");
+    println("");
 }

@@ -3,9 +3,6 @@ extern mod mecab;
 
 use mecab::INode;
 
-//use std::rt::io::print;
-//use std::rt::io::println;
-
 fn main() {
     let mut model = mecab::Model::new2("");
     let mecab = model.create_tagger();
