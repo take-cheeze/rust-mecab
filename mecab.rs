@@ -459,7 +459,7 @@ impl<'owner> Tagger<'owner> {
     /// Parses input and returns `Node`.
     pub fn parse_to_node<'tagger>(&'tagger self, input: &str) -> TaggerNode<'tagger, 'owner> {
         unsafe {
-            let node = mecab_sparse_tonode2(self.mecab, std::vec::raw::to_ptr(input.as_bytes()) as *c_char, input.len() as u64 );
+            let node = mecab_sparse_tonode2(self.mecab, input.as_bytes().as_ptr() as *c_char, input.len() as u64 );
             if node.is_null() {
                 let msg = self.strerror();
                 fail!(msg);
