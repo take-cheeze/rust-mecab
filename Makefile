@@ -16,6 +16,9 @@ libmecab: setup-lib $(SOURCES)
 test: setup-test $(SOURCES)
 	rustc -O mecab.rs --test --out-dir $(TESTDIR)
 
+wakachigaki-input: setup-bin libmecab $(E)/wakachigaki-input.rs
+	rustc -Z extra-debug-info -O $(E)/wakachigaki-input.rs -L $(LIBDIR) --out-dir $(BINDIR)
+
 wakachigaki: setup-bin libmecab $(E)/wakachigaki.rs
 	rustc -Z extra-debug-info -O $(E)/wakachigaki.rs -L $(LIBDIR) --out-dir $(BINDIR)
 
