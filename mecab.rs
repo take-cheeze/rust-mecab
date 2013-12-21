@@ -414,9 +414,7 @@ impl<'owner> Tagger<'owner> {
         }
         argptrs.push(std::ptr::null());
 
-        let mecab = argptrs.as_imm_buf(|argv, _len| unsafe {
-            mecab_new(argc, argv)
-        });
+        let mecab = unsafe { mecab_new( argc, argptrs.as_ptr() ) };
 
         if mecab.is_null() {
             fail!(~"failed to create new instance");
@@ -520,9 +518,7 @@ impl Model {
         }
         argptrs.push(std::ptr::null());
 
-        let model = argptrs.as_imm_buf(|argv, _len| unsafe {
-            mecab_model_new(argc, argv)
-        });
+        let model = unsafe { mecab_model_new( argc, argptrs.as_ptr() ) };
 
         if model.is_null() {
             fail!(~"failed to create new Model");
