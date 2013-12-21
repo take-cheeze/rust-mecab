@@ -4,10 +4,7 @@ extern mod mecab;
 use mecab::INode;
 
 fn main() {
-    let mut model = mecab::Model::new2("");
-    let mecab = model.create_tagger();
-    //let mecab = mecab::Tagger::new2("");
-    //let mecab = get_tagger();
+    let mecab = mecab::Tagger::new2("");
 
     let input = "うらにわにはにわにわにはにわにわとりがいる";
 
