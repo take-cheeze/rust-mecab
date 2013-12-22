@@ -52,7 +52,7 @@ extern {
     fn mecab_model_new_lattice(model: *mecab_model_t) -> *mecab_lattice_t;
     fn mecab_model_destroy(model: *mecab_model_t);
 
-    fn mecab_lattice_set_sentence(lattice: *mecab_lattice_t, input: *c_char);
+    fn mecab_lattice_set_sentence2(lattice: *mecab_lattice_t, input: *c_char, len: size_t);
     fn mecab_lattice_tostr(lattice: *mecab_lattice_t) -> *c_char;
     fn mecab_lattice_get_size(lattice: *mecab_lattice_t) -> size_t;
     fn mecab_lattice_get_bos_node(lattice: *mecab_lattice_t) -> *mecab_node_t;
@@ -468,7 +468,7 @@ impl<'owner> Tagger<'owner> {
     }
 
     /// Parses input in given `lattice` and returns true on success.
-    fn parse_lattice(&self, lattice: &Lattice) -> bool {
+    pub fn parse_lattice(&self, lattice: &Lattice) -> bool {
         unsafe {
             let status = mecab_parse_lattice(self.mecab, lattice.lattice);
             status != 0 as c_int
@@ -583,14 +583,16 @@ impl<'owner> ToStr for Lattice<'owner> {
 
 impl<'owner> Lattice<'owner> {
     /// Set input of the lattice.
-    fn set_sentence(&self, input: &str) {
-        input.to_c_str().with_ref( |buf| {
-            unsafe { mecab_lattice_set_sentence(self.lattice, buf); }
-        })
+    pub fn set_sentence(&self, input: &str) {
+        unsafe {
+            let bytes = input;
+            //let bytes = input.as_owned_vec();
+            mecab_lattice_set_sentence2(self.lattice, bytes.as_ptr() as *c_char, bytes.len() as size_t); 
+        }
     }
 
     /// Returns the beginning node of the sentence on success.
-    fn get_bos_node<'lattice>(&'lattice self) -> LatticeNode<'lattice, 'owner> {
+    pub fn get_bos_node<'lattice>(&'lattice self) -> LatticeNode<'lattice, 'owner> {
         unsafe {
             let node = mecab_lattice_get_bos_node(self.lattice);
 
