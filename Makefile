@@ -14,7 +14,7 @@ libmecab: setup-lib $(SOURCES)
 
 .PHONY: test
 test: setup-test $(SOURCES)
-	rustc -O mecab.rs --test --out-dir $(TESTDIR)
+	rustc -Z extra-debug-info -O mecab.rs --test --out-dir $(TESTDIR)
 
 wakachigaki-input: setup-bin libmecab $(E)/wakachigaki-input.rs
 	rustc -Z extra-debug-info -O $(E)/wakachigaki-input.rs -L $(LIBDIR) --out-dir $(BINDIR)
@@ -23,16 +23,16 @@ wakachigaki: setup-bin libmecab $(E)/wakachigaki.rs
 	rustc -Z extra-debug-info -O $(E)/wakachigaki.rs -L $(LIBDIR) --out-dir $(BINDIR)
 
 katakanize: setup-bin libmecab $(E)/katakanize.rs
-	rustc -O $(E)/katakanize.rs -L $(LIBDIR) --out-dir $(BINDIR)
+	rustc -Z extra-debug-info -O $(E)/katakanize.rs -L $(LIBDIR) --out-dir $(BINDIR)
 
 multithread-simple: setup-bin libmecab $(E)/multithread-simple.rs
-	rustc -O $(E)/multithread-simple.rs -L $(LIBDIR) --out-dir $(BINDIR)
+	rustc -Z extra-debug-info -O $(E)/multithread-simple.rs -L $(LIBDIR) --out-dir $(BINDIR)
 
 collect-nouns: setup-bin libmecab $(E)/collect-nouns.rs
-	rustc -O $(E)/collect-nouns.rs -L $(LIBDIR) --out-dir $(BINDIR)
+	rustc -Z extra-debug-info -O $(E)/collect-nouns.rs -L $(LIBDIR) --out-dir $(BINDIR)
 
 softwakachi: setup-bin libmecab $(E)/softwakachi.rs
-	rustc -O $(E)/softwakachi.rs -L $(LIBDIR) --out-dir $(BINDIR)
+	rustc -Z extra-debug-info -O $(E)/softwakachi.rs -L $(LIBDIR) --out-dir $(BINDIR)
 
 setup-bin:
 	mkdir -p $(BINDIR)
