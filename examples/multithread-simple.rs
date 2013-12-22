@@ -1,38 +1,37 @@
 extern mod std;
+extern mod extra;
 extern mod mecab;
-
-use std::arc;
 
 fn main() {
     let s = "これはテストです";
-    let model = mecab::model_new2("");
-    let model = ~arc::ARC(model);
+    let model = mecab::Model::new2("");
+    let model = ~extra::arc::Arc::new(model);
 
-    for 2.times {
-        let model = ~arc::clone(model);
+    for unused in range(0,2) {
+        let model = ~model.clone();
 
-        do task::spawn {
-            let model = arc::get(model);
+        do spawn {
+            let model = model.get();
             let tagger = model.create_tagger();
             let lattice = model.create_lattice();
 
             lattice.set_sentence(s);
 
             if tagger.parse_lattice(&lattice) {
-                io::println("result: ");
-                io::println(fmt!("%s", lattice.to_str()));
+                println("result: ");
+                println(format!("{:s}", lattice.to_str()));
             }
         }
     }
 
-    let model = arc::get(model);
+    let model = model.get();
     let tagger = model.create_tagger();
     let lattice = model.create_lattice();
 
     lattice.set_sentence(s);
 
     if tagger.parse_lattice(&lattice) {
-        io::println("result: ");
-        io::println(fmt!("%s", lattice.to_str()));
+        println("result: ");
+        println(format!("{:s}", lattice.to_str()));
     }
 }
