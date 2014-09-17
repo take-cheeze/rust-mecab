@@ -1,0 +1,14 @@
+[package]
+
+name = "mecab"
+version = "0.2.0"
+authors = ["Tycho Sci", "Yegor Alexeye", "Takeshi Watanabe"]
+
+[dependencies.link-config]
+
+git = "https://github.com/take-cheeze/link-config.git"
+branch = "config_lib"
+
+[dependencies.encoding]
+
+git = "https://github.com/lifthrasiir/rust-encoding.git"

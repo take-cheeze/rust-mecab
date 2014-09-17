@@ -1,30 +1,28 @@
-extern mod mecab;
+#![feature(phase)]
 
-use mecab::INode;
+extern crate mecab;
+#[phase(plugin)] extern crate "link-config" as link_config;
+
+link_config!("mecab") extern {}
 
 fn main() {
-    let mecab = mecab::Tagger::new2("");
+    let mecab = ::mecab::Tagger::new2("");
 
     let input = "我々は、宇宙人だ";
 
-    println(format!("input: {:s}", input));
+    println!("input: {:s}", input);
 
     let node = mecab.parse_to_node(input);
 
-    print("output: ");
+    print!("output: ");
 
     for n in node.iter() {
-        let status = unsafe { (*n).get_status() };
-
-        if status == mecab::NOR_NODE {
-            let mut i = 0;
-            let feature = unsafe { (*n).get_feature() };
-            for s in feature.split(',') {
-                if i == 7 { print(format!("{:s}", s)); }
-                i += 1;
-            }
+        match n.get_status() {
+            ::mecab::Normal => {
+                print!("{:s}", n.get_feature().as_slice().split(',').nth(7).unwrap());
+            }, _ => {}
         }
     }
 
-    println("");
+    println!("");
 }

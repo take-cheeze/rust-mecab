@@ -1,26 +1,24 @@
-extern mod std;
-extern mod mecab;
+#![feature(phase)]
 
-use std::arc;
+extern crate mecab;
+#[phase(plugin)] extern crate "link-config" as link_config;
 
-use mecab::IMeCabNode;
-use mecab::MeCabLattice;
-use mecab::NOR_NODE;
-use mecab::UNK_NODE;
+use std::comm;
 
-fn collect_nouns(lattice: &MeCabLattice) -> ~[~str] {
-    let mut v = ~[];
+link_config!("mecab") extern {}
+
+fn collect_nouns(lattice: &::mecab::Lattice) -> Vec<String> {
+    let mut v = Vec::new();
 
     let node = lattice.get_bos_node();
-    for node.each |n| {
-        let status = n.get_status();
-
-        if status == NOR_NODE || status == UNK_NODE {
-            let feature = n.get_feature();
-            for feature.each_split_char(',') |s| {
-                if s == "名詞" { v.push(n.get_surface()); }
-                break;
-            }
+    for n in node.iter() {
+        match n.get_status() {
+            ::mecab::Normal | ::mecab::Unknown => {
+                let feature = n.get_feature();
+                if feature.as_slice().split(',').nth(0).unwrap() == "名詞" {
+                    v.push(n.get_surface().to_string());
+                }
+            }, _ => {}
         }
     }
     return v;
@@ -33,33 +31,26 @@ fn main() {
         "昨日の夕食はカレーでした",
     ];
 
-    let model = mecab::model_new2("");
-    let model = ~arc::ARC(model);
+    let (c, p) = comm::channel();
 
-    let (p, c) = comm::stream();
-    let c = comm::SharedChan(c);
-
-    for sentences.each |&sentence| {
-        let model = ~arc::clone(model);
+    for &sentence in sentences.iter() {
         let c = c.clone();
-
-        do task::spawn_supervised {
-            let model = arc::get(model);
+        spawn(proc() {
+            let model = ::mecab::Model::new2("");
             let tagger = model.create_tagger();
-            let lattice = model.create_lattice();
+            let mut lattice = model.create_lattice();
 
             lattice.set_sentence(sentence);
 
             if tagger.parse_lattice(&lattice) {
                 c.send(collect_nouns(&lattice));
             }
-        }
+        })
     }
 
-    for sentences.len().times {
-        let nouns = p.recv();
-        for nouns.each |noun| {
-            io::println(fmt!("noun: %s", *noun));
+    for _ in range(0, sentences.len()) {
+        for noun in p.recv().iter() {
+            println!("noun: {}", *noun);
         }
     }
 }
