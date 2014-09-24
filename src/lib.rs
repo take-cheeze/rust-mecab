@@ -83,7 +83,7 @@ impl mecab_model_t {
     unsafe fn dictionary_info(&mut self) -> *const mecab_dictionary_info_t {
         let dict = mecab_model_dictionary_info(&mut *self);
         if dict.is_null() {
-            fail!(from_buf(mecab_strerror(std::ptr::mut_null()) as *const u8))
+            fail!(from_buf(mecab_strerror(std::ptr::null_mut()) as *const u8))
         }
         dict
     }
