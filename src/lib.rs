@@ -30,7 +30,7 @@ use libc::funcs::c95::string::strlen;
 
 #[cfg(test)] mod test;
 
-link_config!("mecab")
+link_config!("mecab", ["*-config"])
 extern "C" {
     fn mecab_new(argc: c_int, argv: *mut *mut c_char) -> *mut mecab_t;
     fn mecab_new2(arg: *const c_char) -> *mut mecab_t;

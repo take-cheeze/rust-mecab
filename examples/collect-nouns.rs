@@ -5,7 +5,7 @@ extern crate mecab;
 
 use std::comm;
 
-link_config!("mecab") extern {}
+link_config!("mecab", ["*-config"]) extern {}
 
 fn collect_nouns(lattice: &::mecab::Lattice) -> Vec<String> {
     let mut v = Vec::new();

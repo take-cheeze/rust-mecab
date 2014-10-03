@@ -3,7 +3,7 @@
 extern crate mecab;
 #[phase(plugin)] extern crate "link-config" as link_config;
 
-link_config!("mecab") extern {}
+link_config!("mecab", ["*-config"]) extern {}
 
 fn main() {
     let mecab = ::mecab::Tagger::new2("-m -a");
